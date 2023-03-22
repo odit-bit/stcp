@@ -127,6 +127,7 @@ func (s *Server) readWorker() {
 		if err != nil {
 			log.Println(err)
 			s.errChan <- err
+			return
 		}
 
 		t := b[0]

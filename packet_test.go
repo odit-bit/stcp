@@ -50,6 +50,8 @@ func Test_packetWriter(t *testing.T) {
 	}
 }
 
+var binaryMsg []byte
+
 func Benchmark_PacketReader(b *testing.B) {
 	data := []byte{0, 9, 65, 32, 32, 32, 32, 32, 32, 65, 65}
 	buf := bytes.NewReader(data)
@@ -57,6 +59,7 @@ func Benchmark_PacketReader(b *testing.B) {
 
 	b.ResetTimer()
 	b.ReportAllocs()
+	var msg []byte
 	for i := 0; i < b.N; i++ {
 		buf.Reset(data)
 		msg, err := p.reader.ReadMessage()
@@ -71,7 +74,10 @@ func Benchmark_PacketReader(b *testing.B) {
 			b.Fatalf("element not 65 got %v", msg[8])
 		}
 	}
+	binaryMsg = msg
 }
+
+var writeErr error
 
 func Benchmark_packetWriter(b *testing.B) {
 	dst := []byte{} // stand-in as destination buffer
@@ -79,13 +85,16 @@ func Benchmark_packetWriter(b *testing.B) {
 
 	p := NewReaderWriter(buf, buf)
 	msg := []byte{65, 32, 32, 32, 32, 32, 32, 65, 65}
+	var err error
+
 	b.ResetTimer()
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
-		err := p.writer.WriteMessage(msg)
+		err = p.writer.WriteMessage(msg)
 		if err != nil {
 			b.Fatal(err)
 		}
 		buf.Reset()
 	}
+	writeErr = err
 }

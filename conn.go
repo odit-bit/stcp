@@ -18,7 +18,7 @@ type Conn struct {
 	Sequence int
 }
 
-func newStcpConn(tcp net.Conn, proto *packet, cs *ClienState) *Conn {
+func newConn(tcp net.Conn, proto *packet, cs *ClienState) *Conn {
 	sconn := Conn{
 		conn:     nil,
 		rw:       proto,
@@ -31,22 +31,6 @@ func newStcpConn(tcp net.Conn, proto *packet, cs *ClienState) *Conn {
 func (c *Conn) Conn() net.Conn {
 	return c.conn
 }
-
-// // write  message byte to underlying connection
-// func (c *Conn) WriteMessage(msg []byte) error {
-// 	if c.rw == nil {
-// 		c.rw = NewReaderWriter(c.conn, c.conn)
-// 	}
-// 	return c.rw.WriteMessage(msg)
-// }
-
-// // return message byte from connection
-// func (c *Conn) ReadMessage() ([]byte, error) {
-// 	if c.rw == nil {
-// 		c.rw = NewReaderWriter(c.conn, c.conn)
-// 	}
-// 	return c.rw.ReadMessage()
-// }
 
 // close connection
 func (c *Conn) Close() error {
@@ -85,7 +69,7 @@ func DialWithSession(addr, username, password, session string, sequence int) (*C
 	}
 
 	//connection can use
-	c := newStcpConn(tcp, rw, cs)
+	c := newConn(tcp, rw, cs)
 
 	return c, nil
 }

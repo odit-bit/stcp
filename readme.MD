@@ -1,11 +1,11 @@
-//soupbin add another layer of protocol for connection but a little lower-level close to tcp,
-// example:
+soupbin add another layer of protocol for connection but a little lower-level close to tcp,
+ example:
 
-// so after we established connection with other side via tcp, soupbin do another handshake on top tcp within single connection.
-// assuming a successful tcp connection, if within a certain time both of them do not send any packets
-// the connection is considered failed. here's example soupbin's session :
+ so after we established connection with other side via tcp, soupbin do another handshake on top tcp within single connection.
+ assuming a successful tcp connection, if within a certain time both of them do not send any packets
+ the connection is considered failed. here's example soupbin's session :
 
-/\*
+
 
     								tcp connection established,
     										start session
@@ -26,4 +26,5 @@
     									terminated connection
     ---------------------------------------------------------------------------------------------------
 
-\*/
+
+

@@ -7,6 +7,8 @@ import (
 	"time"
 )
 
+type SeqDataHandlerFunc func([]byte) error
+
 type Client struct {
 	username *string
 	password *string
