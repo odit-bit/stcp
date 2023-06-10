@@ -1,100 +1,76 @@
 package stcp
 
-import (
-	"bytes"
-	"testing"
-)
+// func Benchmark_(b *testing.B) {
+// 	var log LoginRequest
+// 	for i := 0; i < b.N; i++ {
+// 		lr := NewLoginRequest("admin", "12345", "22a10", "1")
+// 		log = *lr
+// 	}
+// 	_ = log
+// }
 
-func Benchmark_createLoginRequestMsg(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		b := createLoginRequestMessage("admin", "12345", "22a10", 852)
-		_ = b
-	}
-}
+// func Benchmark_write(b *testing.B) {
+// 	lr := NewLoginRequest("admin", "12345", "22a10", "1")
+// 	var dst bytes.Buffer
+// 	for i := 0; i < b.N; i++ {
+// 		err := binary.Write(&dst, binary.BigEndian, lr)
+// 		if err != nil {
+// 			b.Log(err)
+// 			b.Fail()
+// 		}
+// 		dst.Reset()
+// 	}
+// }
 
-func Test_packetReader(t *testing.T) {
-	data := []byte{0, 9, 65, 32, 32, 32, 32, 32, 32, 65, 65}
-	buf := bytes.NewBuffer(data)
-	p := NewReaderWriter(buf, buf)
+// func Benchmark_read(b *testing.B) {
+// 	b.StopTimer()
+// 	lr := NewLoginRequest("admin", "12345", "22a10", "1")
+// 	var temp bytes.Buffer
+// 	binary.Write(&temp, binary.BigEndian, lr)
 
-	actual, err := p.reader.ReadMessage()
-	if err != nil {
-		t.Errorf("want nil got %v", err)
-	}
-	expected := []byte{65, 32, 32, 32, 32, 32, 32, 65, 65}
-	for i, v := range expected {
-		if v != actual[i] {
-			t.Errorf("want %v, got %v ", v, actual[i])
-		}
-	}
-}
+// 	n := temp.Len()
+// 	data := make([]byte, n)
+// 	copy(data, temp.Bytes())
 
-func Test_packetWriter(t *testing.T) {
-	buf := bytes.NewBuffer([]byte{})
-	p := NewReaderWriter(buf, buf)
+// 	var src bytes.Reader
+// 	src.Reset(data)
 
-	data := []byte{65, 32, 32, 32, 32, 32, 32, 65, 65}
-	err := p.writer.WriteMessage(data)
-	if err != nil {
-		t.Errorf("want nil got %v", err)
-	}
-	actual := buf.Bytes()
-	expected := []byte{0, 9, 65, 32, 32, 32, 32, 32, 32, 65, 65}
-	if len(actual) != len(expected) {
-		t.Fatalf("want %v, got %v", len(expected), len(actual))
-	}
-	for i, v := range expected {
-		if v != actual[i] {
-			t.Errorf("want %v, got %v ", v, actual[i])
-		}
-	}
-}
+// 	b.ResetTimer()
+// 	b.StartTimer()
+// 	var expect LoginRequest
+// 	for i := 0; i < b.N; i++ {
+// 		err := binary.Read(&src, binary.BigEndian, &expect)
+// 		if err != nil {
+// 			b.Log(err)
+// 			b.Fail()
+// 		}
+// 		src.Reset(data)
+// 	}
+// }
 
-var binaryMsg []byte
+// func Benchmark_sequenced(b *testing.B) {
+// 	b.StopTimer()
+// 	data := bytes.Repeat([]byte{'X'}, 1000) //[]byte{'A', 'h', 'e', 'l', 'l', 'o'}
+// 	s := Sequenced{
+// 		Prefix: Prefix{
+// 			Length: uint16(1 + len(data)),
+// 			Typ:    'S',
+// 		},
+// 		Payload: data,
+// 	}
+// 	dst := io.Discard
 
-func Benchmark_PacketReader(b *testing.B) {
-	data := []byte{0, 9, 65, 32, 32, 32, 32, 32, 32, 65, 65}
-	buf := bytes.NewReader(data)
-	p := NewReaderWriter(buf, bytes.NewBuffer([]byte{}))
+// 	b.ResetTimer()
+// 	b.StartTimer()
+// 	for i := 0; i < b.N; i++ {
+// 		err := writePrefixBinary(dst, &s.Prefix)
+// 		if err != nil {
+// 			b.Fatal(err)
+// 		}
+// 		err = writePayloadBinary(dst, s.Payload)
+// 		if err != nil {
+// 			b.Fatal(err)
+// 		}
 
-	b.ResetTimer()
-	b.ReportAllocs()
-	var msg []byte
-	for i := 0; i < b.N; i++ {
-		buf.Reset(data)
-		msg, err := p.reader.ReadMessage()
-		if err != nil {
-			b.Fatal(err)
-		}
-
-		if len(msg) != 9 {
-			b.Fatal("length not 9")
-		}
-		if msg[8] != 65 {
-			b.Fatalf("element not 65 got %v", msg[8])
-		}
-	}
-	binaryMsg = msg
-}
-
-var writeErr error
-
-func Benchmark_packetWriter(b *testing.B) {
-	dst := []byte{} // stand-in as destination buffer
-	buf := bytes.NewBuffer(dst)
-
-	p := NewReaderWriter(buf, buf)
-	msg := []byte{65, 32, 32, 32, 32, 32, 32, 65, 65}
-	var err error
-
-	b.ResetTimer()
-	b.ReportAllocs()
-	for i := 0; i < b.N; i++ {
-		err = p.writer.WriteMessage(msg)
-		if err != nil {
-			b.Fatal(err)
-		}
-		buf.Reset()
-	}
-	writeErr = err
-}
+// 	}
+// }

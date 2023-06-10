@@ -24,3 +24,4 @@ go.work
 *.txt
 /example
 /cmd
+/ex
