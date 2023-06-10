@@ -48,6 +48,18 @@ func NewServerWithOpts(conn net.Conn, opts ...ServerOptionFunc) (*serverConn, er
 	return s, nil
 }
 
+func NewServerConn(conn net.Conn, auth Authenticator) *serverConn {
+	s := &serverConn{
+		rwc:      conn,
+		sw:       NewWriter(conn),
+		sr:       NewReader(conn),
+		authFunc: auth,
+		resetC:   make(chan time.Duration),
+	}
+
+	return s
+}
+
 func Accept(l net.Listener, auth Authenticator) (*serverConn, error) {
 	c, err := l.Accept()
 	if err != nil {
@@ -90,7 +102,12 @@ func (s *serverConn) Auth() error {
 	}
 
 	// send accept
-	return s.sendLoginAccept(session, sequence)
+	if err := s.sendLoginAccept(session, sequence); err != nil {
+		return err
+	}
+
+	go heartbeats(ServerHbType, s.resetC, s.rwc)
+	return nil
 }
 
 // send payload as sequence message

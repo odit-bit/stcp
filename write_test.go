@@ -1,0 +1,65 @@
+package stcp
+
+import (
+	"bytes"
+	"io"
+	"testing"
+)
+
+func TestWrite(t *testing.T) {
+	var tt = []struct {
+		name   string
+		input  []byte
+		typ    uint8
+		expect []byte
+	}{
+		{
+			name:   "Write Sequence packet",
+			input:  []byte("hello"),
+			typ:    'S',
+			expect: []byte{0, 6, 'S', 'h', 'e', 'l', 'l', 'o'},
+		},
+	}
+
+	var dst bytes.Buffer
+
+	w := Writer{
+		dst: &dst,
+		buf: &bytes.Buffer{},
+	}
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			err := w.WriteMessage(tc.typ, tc.input[:])
+			if err != nil {
+				t.Error(err)
+			}
+
+			actual := dst.Bytes()
+			if !bytes.Equal(actual, tc.expect) {
+				t.Errorf("got %v", actual)
+			}
+			dst.Reset()
+		})
+	}
+}
+
+func Benchmark_Write(b *testing.B) {
+	input := []byte{'h', 'e', 'l', 'l', 'o'}
+	typ := uint8('S')
+	var dst = io.Discard
+
+	w := Writer{
+		dst: dst,
+		buf: &bytes.Buffer{},
+	}
+
+	var result []byte
+	for i := 0; i < b.N; i++ {
+		err := w.WriteMessage(typ, input)
+		if err != nil {
+			b.Fatal(err)
+		}
+
+	}
+	BencResult = result
+}

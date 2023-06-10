@@ -19,6 +19,7 @@ func NewWriter(dst io.Writer) *Writer {
 	return &w
 }
 
+// WriteMessage packed p to network type and write to underlying writer
 func (w *Writer) WriteMessage(typ uint8, p []byte) error {
 	err := w.sequence(typ, p[:])
 	if err != nil {
@@ -27,26 +28,36 @@ func (w *Writer) WriteMessage(typ uint8, p []byte) error {
 	return nil
 }
 
-// sequence sequencing the message as packet befor write to underlying writer
-func (w *Writer) sequence(typ uint8, payload []byte) error {
-	n := len(payload)
-	size := 1 + n // type byte + p byte as prefix header
-	if err := writePrefix(typ, uint16(size), w.buf); err != nil {
+// actual implementation of sequencing the message as packet befor write to underlying writer
+func (w *Writer) sequence(typ uint8, message []byte) error {
+	messageLength := len(message)
+	packetSize := 1 + messageLength // type byte + p byte as prefix header
+
+	//write prefix [2]byte
+	if err := writePrefix(uint16(packetSize), w.buf); err != nil {
 		return err
 	}
 
-	if _, err := w.buf.Write(payload); err != nil {
+	//write typ uint8/byte
+	if err := w.buf.WriteByte(byte(typ)); err != nil {
 		return err
 	}
+
+	//write message [n]byte
+	if _, err := w.buf.Write(message); err != nil {
+		return err
+	}
+
+	//actual read to underlyng writer
 	if _, err := w.dst.Write(w.buf.Bytes()); err != nil {
 		return err
 	}
-
+	w.buf.Reset()
 	return nil
 }
 
-// implement to write prefix ( size and type ) before write the actual payload
-func writePrefix(typ uint8, size uint16, buf *bytes.Buffer) error {
+// writePrefix append (size) byte to buf
+func writePrefix(size uint16, buf *bytes.Buffer) error {
 	if err := buf.WriteByte(byte(size >> 8)); err != nil {
 		return err
 	}
@@ -54,10 +65,5 @@ func writePrefix(typ uint8, size uint16, buf *bytes.Buffer) error {
 		return err
 	}
 
-	if err := buf.WriteByte(byte(typ)); err != nil {
-		return err
-	}
 	return nil
 }
-
-//////////////////////////

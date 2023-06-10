@@ -33,8 +33,8 @@ type client struct {
 	resetC chan time.Duration
 }
 
-func NewClient(conf *ClientConfig) (*client, error) {
-	conn, err := net.Dial("tcp", conf.Addr)
+func Connect(addr, username, password string, sh SequenceHandlerFunc) (*client, error) {
+	conn, err := net.Dial("tcp", addr)
 	if err != nil {
 		return nil, err
 	}
@@ -42,46 +42,22 @@ func NewClient(conf *ClientConfig) (*client, error) {
 	c := &client{
 		session:  "",
 		sequence: 0,
-		username: &conf.Username,
-		password: &conf.Password,
-		sh:       conf.SH,
+		username: &username,
+		password: &password,
+		sh:       sh,
 		pr:       NewReader(conn), //&Reader{buf: [512]byte{}, r: conn},
 		pw:       NewWriter(conn), //&Writer{buf: [512]byte{}, w: conn},
 		rwc:      conn,
 		resetC:   make(chan time.Duration),
 	}
-	return c, nil
-}
-
-func NewClienAndConnect(conf *ClientConfig) error {
-	c, err := NewClient(conf)
+	err = c.login(*c.username, *c.password, c.session, c.sequence)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	if err := c.Connect(); err != nil {
-		return err
-	}
-	defer func() {
-		fmt.Println("Sequence packet received", c.SequenceNumber())
-		c.rwc.Close()
-	}()
-
-	if err := c.Receive(); err != nil {
-		return err
-	}
-	return nil
-
-}
-
-func (c *client) Connect() error {
-
-	if err := c.login(*c.username, *c.password, c.session, c.sequence); err != nil {
-		return err
-	}
-
 	go c.startHeartbeats()
 
-	return nil
+	return c, nil
+
 }
 
 func (c *client) sendLoginRequest(username, password, session, sequence string) error {
@@ -108,6 +84,8 @@ func (c *client) login(username, password, session string, sequence int) error {
 	if err != nil {
 		return err
 	}
+	fmt.Println("debug login", string(msg))
+
 	switch msg[0] {
 	case LoginAcceptType:
 		//loginAccept
@@ -139,7 +117,7 @@ func (c *client) Receive() error {
 		}
 		switch b[0] {
 		case SequenceMessage:
-			err := c.sh(b)
+			err := c.sh(b[1:])
 			if err != nil {
 				return err
 			}
@@ -150,20 +128,17 @@ func (c *client) Receive() error {
 		case ServerHbType:
 			continue
 		default:
-			return fmt.Errorf("unknown packet")
+			return fmt.Errorf("unknown packet %v", string(b[0]))
 		}
 	}
 }
 
 func (c *client) handleLoginAccept(packet []byte) error {
-	msg, err := c.pr.ReadMessage()
-	if err != nil {
-		return err
-	}
 
 	// parseLoginAccept
-	c.session = string(bytes.TrimSpace(msg[1:7]))
-	c.sequence, err = strconv.Atoi(string(bytes.TrimSpace(msg[7:17])))
+	var err error
+	c.session = string(bytes.TrimSpace(packet[1:7]))
+	c.sequence, err = strconv.Atoi(string(bytes.TrimSpace(packet[7:17])))
 	if err != nil {
 		return err
 	}
@@ -177,4 +152,9 @@ func (c *client) startHeartbeats() {
 
 func (c *client) SequenceNumber() int {
 	return c.sequence
+}
+
+func (c *client) Close() error {
+	close(c.resetC)
+	return c.rwc.Close()
 }
