@@ -3,16 +3,16 @@ package stcp
 import "time"
 
 const (
-	// WriteTimeoutDefault = 5 * time.Second
-	ReadTimeoutDefault = 3 * time.Second
-	HeartbeatTimeout   = 2 * time.Second
+	//default deadline to timeout the connection
+	TimeoutDefault = 4 * time.Second
 
-	DefaultBuffer = 4096
+	// interval or ticker for send heartbeat packet
+	HeartbeatTimeout = 2 * time.Second
 )
 const (
-	SequenceMessage     uint8 = 'S'
-	UnsesequenceMessage uint8 = 'U'
-	DebugMessage        uint8 = '+'
+	SequenceType     uint8 = 'S'
+	UnsesequenceType uint8 = 'U'
+	DebugType        uint8 = '+'
 
 	LoginRequestType uint8 = 'L'
 	LoginAcceptType  uint8 = 'A'

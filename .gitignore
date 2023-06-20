@@ -25,3 +25,6 @@ go.work
 /example
 /cmd
 /ex
+/server
+/client
+/ax

@@ -23,13 +23,10 @@ func TestWrite(t *testing.T) {
 
 	var dst bytes.Buffer
 
-	w := Writer{
-		dst: &dst,
-		buf: &bytes.Buffer{},
-	}
+	w := NewWriter(&dst)
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			err := w.WriteMessage(tc.typ, tc.input[:])
+			err := w.WritePacket(tc.typ, tc.input[:])
 			if err != nil {
 				t.Error(err)
 			}
@@ -48,14 +45,14 @@ func Benchmark_Write(b *testing.B) {
 	typ := uint8('S')
 	var dst = io.Discard
 
-	w := Writer{
-		dst: dst,
-		buf: &bytes.Buffer{},
-	}
+	w := NewWriter(dst)
 
 	var result []byte
-	for i := 0; i < b.N; i++ {
-		err := w.WriteMessage(typ, input)
+
+	loopCount := b.N
+	b.ResetTimer()
+	for i := 0; i < loopCount; i++ {
+		err := w.WritePacket(typ, input)
 		if err != nil {
 			b.Fatal(err)
 		}
