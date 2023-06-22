@@ -30,7 +30,6 @@ type Conn struct {
 	writer *Writer
 
 	resetT chan time.Duration
-	// err    error
 }
 
 func NewConn(rwc net.Conn) *Conn {
@@ -121,11 +120,6 @@ func heartbeatsTicker(c *Conn, typ uint8, resetC chan time.Duration) {
 			timer.Reset(newInterval)
 		}
 	}
-}
-
-type Packet struct {
-	Typ     uint8
-	Payload []byte
 }
 
 // old deprecated  ///

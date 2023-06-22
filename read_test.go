@@ -77,7 +77,8 @@ func Test_ReaderWriteTo(t *testing.T) {
 var BencResult []byte
 
 func Benchmark_Read(b *testing.B) {
-	input := []byte{0, 6, 'S', 'h', 'e', 'l', 'l', 'o'}
+	data := bytes.Repeat([]byte{'x'}, 127)
+	input := append([]byte{0, 128, 'S'}, data...) //[]byte{0, 6, 'S', 'h', 'e', 'l', 'l', 'o'}
 	var src bytes.Reader
 
 	r := NewReader(&src)

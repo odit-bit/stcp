@@ -47,11 +47,15 @@ func (r *Reader) ReadMessage() ([]byte, error) {
 	// 	}
 	// 	readCount += n
 	// }
+
 	_, err = io.ReadFull(r.r, r.payloadBuf[:payloadLength])
 	if err != nil {
 		return nil, err
 	}
-	return r.payloadBuf[:payloadLength], nil
+
+	res := make([]byte, payloadLength)
+	copy(res, r.payloadBuf[:payloadLength])
+	return res, nil
 }
 
 // implement io.WriterTo
